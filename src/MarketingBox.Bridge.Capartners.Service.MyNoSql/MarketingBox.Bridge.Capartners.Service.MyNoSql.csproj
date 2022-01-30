@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <TargetsForTfmSpecificBuildOutput>
+      $(TargetsForTfmSpecificBuildOutput);PackReferencedProjectOutputs
+    </TargetsForTfmSpecificBuildOutput>
+    <PackageId>MarketingBox.Integration.Service.MyNoSql</PackageId>
+    <Authors>MarketingBox</Authors>
+    <Company>MarketingBox</Company>
+    <Product>MarketingBox</Product>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MyJetWallet.Sdk.Service" Version="2.1.6" />
+    <PackageReference Include="MyJetWallet.Sdk.ServiceBus" Version="2.1.0" />
+    <PackageReference Include="MyNoSqlServer.Abstractions" Version="1.0.5" />
+    <PackageReference Include="MyNoSqlServer.DataWriter" Version="1.4.2" />
+  </ItemGroup>
+
+</Project>
