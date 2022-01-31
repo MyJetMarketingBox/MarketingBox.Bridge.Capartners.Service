@@ -39,9 +39,7 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
         {
             _logger.LogInformation("Creating new LeadInfo {@context}", request);
 
-            var brandRequest = MapToApi(request, _settingsModel.BrandBrandId,
-                Convert.ToInt32(_settingsModel.BrandAffiliateId), _settingsModel.BrandAffiliateKey,
-                DateTimeOffset.UtcNow.ToString());
+            var brandRequest = MapToApi(request);
 
             try
             {
@@ -79,8 +77,7 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
             return SuccessMapToGrpc(registerResult.SuccessResult);
         }
 
-        private RegistrationRequest MapToApi(IntegrationBridge.RegistrationRequest request,
-            string authBrandId, int authAffId, string authAffApiKey, string requestId)
+        private RegistrationRequest MapToApi(IntegrationBridge.RegistrationRequest request)
         {
             return new RegistrationRequest()
             {
