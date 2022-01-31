@@ -1,4 +1,4 @@
-# MarketingBox.Bridge.SimpleTrading.Service
+# MarketingBox.Bridge.Capartners.Service
 
 ![Release Service](https://github.com/MyJetMarketingBox/MarketingBox.Bridge.Capartners.Service/workflows/Release%20Service/badge.svg)
 
