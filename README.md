@@ -6,5 +6,5 @@
 
 ![CI test build](https://github.com/MyJetMarketingBox/MarketingBox.Bridge.Capartners.Service/workflows/CI%20test%20build/badge.svg)
 
-*Client library:* ![Nuget version](https://img.shields.io/nuget/v/MarketingBox.Bridge.Capartners.Service?label=MyJetWallet.Service.AssetsDictionary.Client&style=social)
+*Client library:* ![Nuget version](https://img.shields.io/nuget/v/MarketingBox.Bridge.Capartners.Service?label=MarketingBox.Bridge.Capartners.Service&style=social)
 
