@@ -11,39 +11,33 @@ using Serilog;
 
 namespace MarketingBox.Bridge.Capartners.Service.Services.Integrations
 {
-    public class SimpleTradingHttpClient : ISimpleTradingHttpClient
+    public class CapartnersHttpClient : ICapartnersHttpClient
     {
         private readonly string _baseUrl;
-        public SimpleTradingHttpClient(string baseUrl)
+        private readonly string _login;
+        private readonly string _password;
+
+        public CapartnersHttpClient(string baseUrl, string login, string password)
         {
             _baseUrl = baseUrl;
+            _login = login;
+            _password = password;
         }
 
-        // Url: /integration/v1/auth/register
+        // Url: //clients
         public async Task<Response<RegistrationResponse, FailRegisterResponse>>
             RegisterTraderAsync(RegistrationRequest request)
         {
             var requestString = JsonConvert.SerializeObject(request);
             var result = await _baseUrl
-                .AppendPathSegments("integration", "v1", "auth", "register")
+                .AppendPathSegments("clients")
                 .WithHeader("Content-Type", "application/json")
+                .WithHeader("login", _login)
+                .WithHeader("password", _password)
                 .AllowHttpStatus("400")
-                .AllowHttpStatus("401")
+                .AllowHttpStatus("403")
                 .PostJsonAsync(request);
             return await result.ResponseMessage.DeserializeTo<RegistrationResponse, FailRegisterResponse>();
-        }
-
-        // Url: /integration/v1/reports/Count
-        public async Task<Response<ReportCountersResponse, FailRegisterResponse>> GetCountsAsync(ReportCountersRequest request)
-        {
-            var requestString = JsonConvert.SerializeObject(request);
-            var result = await _baseUrl
-                .AppendPathSegments("integration", "v1", "reports", "Count")
-                .WithHeader("Content-Type", "application/json")
-                .AllowHttpStatus("400")
-                .AllowHttpStatus("401")
-                .PostJsonAsync(request);
-            return await result.ResponseMessage.DeserializeTo<ReportCountersResponse, FailRegisterResponse>();
         }
 
         // Url: /integration/v1/reports/Deposits
@@ -53,8 +47,10 @@ namespace MarketingBox.Bridge.Capartners.Service.Services.Integrations
             var httpResponse = await _baseUrl
                 .AppendPathSegments("integration", "v1", "reports", "Deposits")
                 .WithHeader("Content-Type", "application/json")
+                .WithHeader("login", _login)
+                .WithHeader("password", _password)
                 .AllowHttpStatus("400")
-                .AllowHttpStatus("401")
+                .AllowHttpStatus("403")
                 .PostJsonAsync(request);
             //return await result.ResponseMessage.DeserializeTo<ReportDepositResponse, FailRegisterResponse>();
             string resultData = string.Empty;
@@ -95,8 +91,10 @@ namespace MarketingBox.Bridge.Capartners.Service.Services.Integrations
             var httpResponse = await _baseUrl
                 .AppendPathSegments("integration", "v1", "reports", "Registrations")
                 .WithHeader("Content-Type", "application/json")
+                .WithHeader("login", _login)
+                .WithHeader("password", _password)
                 .AllowHttpStatus("400")
-                .AllowHttpStatus("401")
+                .AllowHttpStatus("403")
                 .PostJsonAsync(request);
 
             //return await result.ResponseMessage.DeserializeListTo<IReadOnlyList<ReportRegistrationModel>, FailRegisterResponse>();

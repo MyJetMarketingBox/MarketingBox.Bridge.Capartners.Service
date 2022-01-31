@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using MarketingBox.Bridge.Capartners.Service.Domain.Utils;
 using MarketingBox.Bridge.Capartners.Service.Services.Integrations;
 using MarketingBox.Bridge.Capartners.Service.Services.Integrations.Contracts.Enums;
 using MarketingBox.Bridge.Capartners.Service.Services.Integrations.Contracts.Requests;
@@ -18,14 +19,14 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
     public class BridgeService : IBridgeService
     {
         private readonly ILogger<BridgeService> _logger;
-        private readonly ISimpleTradingHttpClient _simpleTradingHttpClient;
+        private readonly ICapartnersHttpClient _capartnersHttpClient;
         private readonly SettingsModel _settingsModel;
 
         public BridgeService(ILogger<BridgeService> logger,
-            ISimpleTradingHttpClient simpleTradingHttpClient, SettingsModel settingsModel)
+            ICapartnersHttpClient capartnersHttpClient, SettingsModel settingsModel)
         {
             _logger = logger;
-            _simpleTradingHttpClient = simpleTradingHttpClient;
+            _capartnersHttpClient = capartnersHttpClient;
             _settingsModel = settingsModel;
         }
         /// <summary>
@@ -62,7 +63,7 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
             RegistrationRequest brandRequest)
         {
             var registerResult =
-                await _simpleTradingHttpClient.RegisterTraderAsync(brandRequest);
+                await _capartnersHttpClient.RegisterTraderAsync(brandRequest);
 
             // Failed
             if (registerResult.IsFailed)
@@ -75,60 +76,7 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
             }
 
             // Success
-            if (registerResult.SuccessResult.IsSuccessfully() &&
-                (SimpleTradingResultCode)registerResult.SuccessResult.Status ==
-                SimpleTradingResultCode.Ok)
-            {
-                // Success
-                return SuccessMapToGrpc(registerResult.SuccessResult);
-            }
-
-            // Success, but software failure
-            if ((SimpleTradingResultCode)registerResult.SuccessResult.Status ==
-                SimpleTradingResultCode.UserExists)
-            {
-                return FailedMapToGrpc(new Error()
-                {
-                    Message = "Registration already exists",
-                    Type = ErrorType.AlreadyExist
-                }, ResultCode.Failed);
-            }
-
-            if ((SimpleTradingResultCode)registerResult.SuccessResult.Status ==
-                SimpleTradingResultCode.InvalidUserNameOrPassword)
-            {
-                return FailedMapToGrpc(new Error()
-                {
-                    Message = "Invalid username or password",
-                    Type = ErrorType.InvalidUserNameOrPassword
-                }, ResultCode.Failed);
-            }
-
-            if ((SimpleTradingResultCode)registerResult.SuccessResult.Status ==
-                SimpleTradingResultCode.PersonalDataNotValid)
-            {
-                return FailedMapToGrpc(new Error()
-                {
-                    Message = "Registration data not valid",
-                    Type = ErrorType.InvalidPersonalData
-                }, ResultCode.Failed);
-            }
-
-            if ((SimpleTradingResultCode)registerResult.SuccessResult.Status ==
-                SimpleTradingResultCode.SystemError)
-            {
-                return FailedMapToGrpc(new Error()
-                {
-                    Message = "Brand Error",
-                    Type = ErrorType.Unknown
-                }, ResultCode.Failed);
-            }
-
-            return FailedMapToGrpc(new Error()
-            {
-                Message = "Unknown Error",
-                Type = ErrorType.Unknown
-            }, ResultCode.Failed);
+            return SuccessMapToGrpc(registerResult.SuccessResult);
         }
 
         private RegistrationRequest MapToApi(IntegrationBridge.RegistrationRequest request,
@@ -141,14 +89,10 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
                 Password = request.Info.Password,
                 Email = request.Info.Email,
                 Phone = request.Info.Phone,
-                LangId = request.Info.Language,
+                Language = request.Info.Language,
                 Ip = request.Info.Ip,
-                CountryByIp = request.Info.Country,
-                AffId = authAffId,
-                BrandId = authBrandId,
-                SecretKey = authAffApiKey,
-                ProcessId = requestId,
-                CountryOfRegistration = request.Info.Country,
+                Country = request.Info.Country,
+                Referral = request.AdditionalInfo.So,
             };
         }
 
@@ -160,9 +104,9 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
                 ResultMessage = EnumExtensions.GetDescription(ResultCode.CompletedSuccessfully),
                 CustomerInfo = new MarketingBox.Integration.Service.Grpc.Models.Registrations.CustomerInfo()
                 {
-                    CustomerId = brandRegistrationInfo.TraderId,
+                    CustomerId = brandRegistrationInfo.ProfileUUID,
                     LoginUrl = brandRegistrationInfo.RedirectUrl,
-                    Token = brandRegistrationInfo.Token
+                    Token = string.Empty,
                 }
             };
         }
@@ -186,12 +130,12 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
         {
             _logger.LogInformation("GetRegistrationsPerPeriodAsync {@context}", request);
 
-            var brandRequest = MapToApi(request, _settingsModel.BrandAffiliateKey);
+            var brandRequest = MapRegistrationToApi(request);
 
             try
             {
                 // Get registrations
-                var registerResult = await _simpleTradingHttpClient.GetRegistrationsAsync(brandRequest);
+                var registerResult = await _capartnersHttpClient.GetRegistrationsAsync(brandRequest);
                 // Failed
                 if (registerResult.IsFailed)
                 {
@@ -217,17 +161,17 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
             }
         }
 
-        private ReportRequest MapToApi(
-            IntegrationBridge.ReportingRequest request,
-            string authAffApiKey)
+        private ReportRequest MapRegistrationToApi(
+            IntegrationBridge.ReportingRequest request)
         {
             return new ReportRequest()
             {
-                Year = request.DateFrom.Year,
-                Month = request.DateFrom.Month,
+                RegistrationDateFrom = CalendarUtils.StartOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
+                RegistrationDateTo = CalendarUtils.EndOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
+                //FirstDepositDateFrom = CalendarUtils.StartOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
+                //FirstDepositDateTo = CalendarUtils.EndOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
+                FirstDeposit = false,
                 Page = request.PageIndex,
-                PageSize = request.PageSize,
-                ApiKey = authAffApiKey
             };
         }
 
@@ -318,12 +262,12 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
         {
             _logger.LogInformation("GetRegistrationsPerPeriodAsync {@context}", request);
 
-            var brandRequest = MapToApi(request, _settingsModel.BrandAffiliateKey);
+            var brandRequest = MapDepositsToApi(request);
 
             try
             {
                 // Get deposits
-                var depositsResult = await _simpleTradingHttpClient.GetDepositsAsync(brandRequest);
+                var depositsResult = await _capartnersHttpClient.GetDepositsAsync(brandRequest);
                 // Failed
                 if (depositsResult.IsFailed)
                 {
@@ -347,6 +291,20 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
                     Type = ErrorType.Unknown
                 }, ResultCode.Failed);
             }
+        }
+
+        private ReportRequest MapDepositsToApi(
+            IntegrationBridge.ReportingRequest request)
+        {
+            return new ReportRequest()
+            {
+                //RegistrationDateFrom = CalendarUtils.StartOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
+                //RegistrationDateTo = CalendarUtils.EndOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
+                FirstDepositDateFrom = CalendarUtils.StartOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
+                FirstDepositDateTo = CalendarUtils.EndOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
+                FirstDeposit = true,
+                Page = request.PageIndex,
+            };
         }
 
         public static IntegrationBridge.DepositorsReportingResponse FailedDepositorsMapToGrpc(Error error, ResultCode code)

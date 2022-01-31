@@ -1,19 +1,13 @@
 using MarketingBox.Bridge.Capartners.Service.Services.Integrations.Contracts.Enums;
+using Newtonsoft.Json;
 
 namespace MarketingBox.Bridge.Capartners.Service.Services.Integrations.Contracts.Responses
 {
     public class RegistrationResponse
     {
-        public string TraderId { get; set; }
-        public string Token { get; set; }
+        [JsonProperty("profileUUID")]
+        public string ProfileUUID { get; set; }
+        [JsonProperty("redirectUrl")]
         public string RedirectUrl { get; set; }
-        public /*OperationApiResponseCodes*/int Status { get; set; }
-
-
-        public bool IsSuccessfully()
-        {
-            var status = (SimpleTradingResultCode)Status;
-            return status == SimpleTradingResultCode.Ok;
-        }
     }
 }

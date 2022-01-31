@@ -7,9 +7,11 @@ namespace MarketingBox.Bridge.Capartners.Service.Modules
     {
         protected override void Load(ContainerBuilder builder)
         {
-            builder.RegisterType<SimpleTradingHttpClient>()
-                .As<ISimpleTradingHttpClient>()
+            builder.RegisterType<CapartnersHttpClient>()
+                .As<ICapartnersHttpClient>()
                 .WithParameter("baseUrl", Program.ReloadedSettings(e => e.BrandUrl).Invoke())
+                .WithParameter("login", Program.ReloadedSettings(e => e.BrandAffiliateId).Invoke())
+                .WithParameter("password", Program.ReloadedSettings(e => e.BrandAffiliateKey).Invoke())
                 .SingleInstance();
         }
     }

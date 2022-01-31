@@ -17,7 +17,7 @@ namespace MarketingBox.Bridge.Capartners.Service.Tests
     {
         private Activity _unitTestActivity;
         private SettingsModel _settingsModel;
-        private SimpleTradingHttpClient _httpClient;
+        private CapartnersHttpClient _httpClient;
         private static Random random = new Random();
         private ILogger<BridgeService> _logger;
         private BridgeService _registerService;
@@ -41,14 +41,15 @@ namespace MarketingBox.Bridge.Capartners.Service.Tests
             _settingsModel = new SettingsModel()
             {
                 SeqServiceUrl = "http://192.168.1.80:5341",
-                BrandAffiliateId = "1027",
-                BrandAffiliateKey = "c23b69afad61464191d067bb166d9511",
-                BrandBrandId = "HandelPro-ST",
-                BrandUrl = "https://integration-test.mnftx.biz/",
+                BrandAffiliateId = "***",
+                BrandAffiliateKey = "***",
+                BrandBrandId = "Capartners",
+                BrandUrl = "https://partner.capartners.cc",
             };
 
             _unitTestActivity = new Activity("UnitTest").Start();
-            _httpClient = new SimpleTradingHttpClient(_settingsModel.BrandUrl);
+            _httpClient = new CapartnersHttpClient(_settingsModel.BrandUrl,
+                _settingsModel.BrandAffiliateId, _settingsModel.BrandAffiliateKey);
             _logger = Mock.Of<ILogger<BridgeService>>();
             _registerService = new BridgeService(_logger, _httpClient, _settingsModel);
         }
@@ -56,14 +57,19 @@ namespace MarketingBox.Bridge.Capartners.Service.Tests
         [Test]
         public async Task HttpGetRegistrationsAsync()
         {
+#if !DEBUG
+            Assert.Pass();
+#endif
+
             var dt = DateTime.Parse("2021-12-01");
-            var request = new ReportRequest()
+            var request = new ReportRequest
             {
-                Year = dt.Year,
-                Month = dt.Month - 1,
-                Page = 1,
-                PageSize = 100,
-                ApiKey = _settingsModel.BrandAffiliateKey,
+                RegistrationDateFrom = "2022-01-01",
+                RegistrationDateTo = "2022-01-31",
+                //FirstDepositDateFrom = "2022-01-01",
+                //FirstDepositDateTo = "2022-01-31",
+                FirstDeposit = false,
+                Page = 1
             };
 
             var result = await _httpClient.GetRegistrationsAsync(request);
@@ -74,14 +80,19 @@ namespace MarketingBox.Bridge.Capartners.Service.Tests
         [Test]
         public async Task HttpGetDepositsAsync()
         {
+#if !DEBUG
+            Assert.Pass();
+#endif
+
             var dt = DateTime.Parse("2021-12-01");
             var request = new ReportRequest()
             {
-                Year = dt.Year,
-                Month = dt.Month - 1,
-                Page = 1,
-                PageSize = 100,
-                ApiKey = _settingsModel.BrandAffiliateKey,
+                //RegistrationDateFrom = "2022-01-01",
+                //RegistrationDateTo = "2022-01-31",
+                FirstDepositDateFrom = "2022-01-01",
+                FirstDepositDateTo = "2022-01-31",
+                FirstDeposit = true,
+                Page = 1
             };
 
             var result = await _httpClient.GetDepositsAsync(request);
@@ -90,23 +101,12 @@ namespace MarketingBox.Bridge.Capartners.Service.Tests
 
 
         [Test]
-        public async Task HttpGetGetCountsAsync()
-        {
-            var dt = DateTime.UtcNow;
-            var request = new ReportCountersRequest()
-            {
-                Year = dt.Year,
-                Month = dt.Month,
-                ApiKey = _settingsModel.BrandAffiliateKey,
-            };
-
-            var result = await _httpClient.GetCountsAsync(request);
-            Assert.IsFalse(result.IsFailed);
-        }
-
-        [Test]
         public async Task GetRegistrationsPerPeriodAsync()
         {
+#if !DEBUG
+            Assert.Pass();
+#endif
+
             var dt = DateTime.Parse("2021-12-01");
             var request = new ReportingRequest()
             {
@@ -123,6 +123,10 @@ namespace MarketingBox.Bridge.Capartners.Service.Tests
         [Test]
         public async Task GetRegistrationsPerPeriodEmptyAsync()
         {
+#if !DEBUG
+            Assert.Pass();
+#endif
+
             var dt = DateTime.Parse("2020-02-01");
             var request = new ReportingRequest()
             {
@@ -139,6 +143,10 @@ namespace MarketingBox.Bridge.Capartners.Service.Tests
         [Test]
         public async Task GetDepositorsPerPeriodAsync()
         {
+#if !DEBUG
+            Assert.Pass();
+#endif
+
             var dt = DateTime.Parse("2021-12-01");
             var request = new ReportingRequest()
             {
@@ -155,6 +163,10 @@ namespace MarketingBox.Bridge.Capartners.Service.Tests
         [Test]
         public async Task GetDepositorsPerPeriodEmptyAsync()
         {
+#if !DEBUG
+            Assert.Pass();
+#endif
+
             var dt = DateTime.Parse("2020-02-01");
             var request = new ReportingRequest()
             {
@@ -167,7 +179,5 @@ namespace MarketingBox.Bridge.Capartners.Service.Tests
             var result = await _registerService.GetDepositorsPerPeriodAsync(request);
             Assert.IsTrue(result.Items.Count == 0);
         }
-
-
     }
 }

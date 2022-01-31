@@ -9,68 +9,54 @@ namespace MarketingBox.Bridge.Capartners.Service.Services.Integrations.Contracts
     {
         [LogMasked]
         [JsonProperty("firstName")]
-        public string? FirstName { get; set; }
+        public string? FirstName { get; set; }  // required
 
         [LogMasked]
         [JsonProperty("lastName")]
-        public string? LastName { get; set; }
+        public string? LastName { get; set; }  // required
 
-        [LogMasked(ShowFirst = 3)]
-        [JsonProperty("phone")]
-        public string? Phone { get; set; }
+        [JsonProperty("country")]
+        public string? Country { get; set; } // ISO 639-1:2002 (DE, CN, etc.)
+
+        [JsonProperty("gender")]
+        public string? Gender { get; set; }  // MALE or FEMALE
 
         [LogMasked(ShowFirst = 2, ShowLast = 3)]
         [JsonProperty("email")]
-        public string? Email { get; set; }
+        public string? Email { get; set; }  // required
 
         [LogMasked]
         [JsonProperty("password")]
-        public string? Password { get; set; }
+        public string? Password { get; set; } // required, 6-16 symbols, at least one letter and one digit
+
+        [LogMasked(ShowFirst = 3)]
+        [JsonProperty("phone")]
+        public string? Phone { get; set; }   // required
+
+        [JsonProperty("language")]
+        public string? Language { get; set; }
+
+        [JsonProperty("source")]
+        public string? Source { get; set; }
+
+        [JsonProperty("referral")]
+        public string? Referral { get; set; }
 
         [LogMasked(ShowFirst = 1, ShowLast = 3, PreserveLength = true)]
         [JsonProperty("ip")]
         public string? Ip { get; set; }
 
-        [JsonProperty("userAgent")]
-        public string? UserAgent { get; set; }
-
-        [JsonProperty("affId")]
-        public int AffId { get; set; }
-        [JsonProperty("trafficSource")]
-        public string? TrafficSource { get; set; }
-
         [LogMasked]
-        [JsonProperty("secretKey")]
-        public string? SecretKey { get; set; }
+        [JsonProperty("city")]
+        public string? City { get; set; }
 
-        [JsonProperty("brandId")]
-        public string? BrandId { get; set; }
+        [JsonProperty("address")]
+        public string? Address { get; set; }
 
-        [JsonProperty("cxdToken")]
-        public string? CxdToken { get; set; }
+        [JsonProperty("postCode")]
+        public string? PostCode { get; set; }
 
-        [JsonProperty("langId")]
-        public string? LangId { get; set; }
-
-        [JsonProperty("countryOfRegistration")]
-        public string? CountryOfRegistration { get; set; }
-
-        [JsonProperty("landingPage")]
-        public string? LandingPage { get; set; }
-
-        [JsonProperty("redirectedFromUrl")]
-        public string? RedirectedFromUrl { get; set; }
-
-        [JsonProperty("countryByIp")]
-        public string? CountryByIp { get; set; }
-
-        [JsonProperty("processId")]
-        public string? ProcessId { get; set; }
-
-        [JsonProperty("target")]
-        public string? Target { get; set; }
-
-        [JsonProperty("cake")]
-        public IDictionary<string, string>? Cake { get; set; }
+        [JsonProperty("birthday")]
+        public string? Birthday { get; set; }
     }
 }

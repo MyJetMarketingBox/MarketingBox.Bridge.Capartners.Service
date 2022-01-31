@@ -4,7 +4,7 @@ using MarketingBox.Bridge.Capartners.Service.Services.Integrations.Contracts.Res
 
 namespace MarketingBox.Bridge.Capartners.Service.Services.Integrations
 {
-    public interface ISimpleTradingHttpClient
+    public interface ICapartnersHttpClient
     {
         /// <summary>
         /// A purchase deduct amount immediately. This transaction type is intended when the goods or services
@@ -14,14 +14,6 @@ namespace MarketingBox.Bridge.Capartners.Service.Services.Integrations
         /// <returns></returns>
         Task<Response<RegistrationResponse, FailRegisterResponse>> RegisterTraderAsync(
             RegistrationRequest request);
-
-        /// <summary>
-        /// It allows to get previous transaction basic information
-        /// </summary>
-        /// <param name="request"></param>
-        /// <returns></returns>
-        Task<Response<ReportCountersResponse, FailRegisterResponse>> GetCountsAsync(
-            ReportCountersRequest request);
         /// <summary>
         /// It allows to get registration reports
         /// </summary>
