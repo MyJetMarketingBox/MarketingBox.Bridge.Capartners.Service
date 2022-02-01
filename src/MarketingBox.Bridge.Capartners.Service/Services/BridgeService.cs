@@ -90,6 +90,7 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
                 Ip = request.Info.Ip,
                 Country = request.Info.Country,
                 Referral = request.AdditionalInfo.So,
+                Source = request.AdditionalInfo.Sub
             };
         }
 
@@ -165,8 +166,8 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
             {
                 RegistrationDateFrom = CalendarUtils.StartOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
                 RegistrationDateTo = CalendarUtils.EndOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
-                //FirstDepositDateFrom = CalendarUtils.StartOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
-                //FirstDepositDateTo = CalendarUtils.EndOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
+                FirstDepositDateFrom = CalendarUtils.StartOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
+                FirstDepositDateTo = CalendarUtils.EndOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
                 FirstDeposit = false,
                 Page = request.PageIndex,
             };
@@ -182,14 +183,18 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
 
         public static IntegrationBridge.RegistrationsReportingResponse SuccessMapToGrpc(ReportRegistrationResponse brandRegistrations)
         {
-            var registrations = brandRegistrations.Items.Select(report => new MarketingBox.Integration.Service.Grpc.Models.Registrations.RegistrationReporting
-            {
-                Crm = MapCrmStatus(report.CrmStatus),
-                CustomerEmail = report.Email,
-                CustomerId = report.UserId,
-                CreatedAt = report.CreatedAt,
-                CrmUpdatedAt = DateTime.UtcNow
-            }).ToList();
+            var registrations = brandRegistrations
+                .Items
+                .Where(s => s.FirstDeposit == false)
+                .Select(report => new MarketingBox.Integration.Service.Grpc.Models.Registrations.RegistrationReporting
+                {
+
+                    Crm = MapCrmStatus(report.SalesStatus),
+                    CustomerEmail = report.Email,
+                    CustomerId = report.ClientUUID,
+                    CreatedAt = report.RegistrationDate,
+                    CrmUpdatedAt = DateTime.UtcNow
+                }).ToList();
 
             return new IntegrationBridge.RegistrationsReportingResponse()
             {
@@ -201,51 +206,49 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
 
         public static CrmStatus MapCrmStatus(string status)
         {
-            switch (status.ToLower())
+            switch (status.ToUpper())
             {
-                case "new":
+                case "NEW":
+                case "TEST":
                     return CrmStatus.New;
 
-                case "fullyactivated":
+                case "DEPOSITOR":
                     return CrmStatus.FullyActivated;
 
-                case "highpriority":
-                    return CrmStatus.HighPriority;
+                //case "":
+                //    return CrmStatus.HighPriority;
 
-                case "callback":
-                    return CrmStatus.Callback;
+                //case "":
+                //    return CrmStatus.Callback;
 
-                case "failedexpectation":
-                    return CrmStatus.FailedExpectation;
+                //case "":
+                //    return CrmStatus.FailedExpectation;
 
-                case "notvaliddeletedaccount":
-                case "notvalidwrongnumber":
-                case "notvalidnophonenumber":
-                case "notvalidduplicateuser":
-                case "notvalidtestlead":
-                case "notvalidunderage":
-                case "notvalidnolanguagesupport":
-                case "notvalidneverregistered":
-                case "notvalidnoneligiblecountries":
+                case "WRONG_INFO":
+                case "WRONG_NUMBER":
+                case "INVALID_LANGUAGE":
+                case "INVALID_COUNTRY":
                     return CrmStatus.NotValid;
 
-                case "notinterested":
+                case "NO_INTEREST":
+                case "HUNG_UP":
                     return CrmStatus.NotInterested;
 
-                case "transfer":
-                    return CrmStatus.Transfer;
+                //case "":
+                //    return CrmStatus.Transfer;
 
-                case "followup":
-                    return CrmStatus.FollowUp;
+                //case "":
+                //    return CrmStatus.FollowUp;
 
-                case "noanswer":
-                case "autocall":
+                case "NEVER_ANSWER":
+                case "VOICEMAIL":
                     return CrmStatus.NA;
 
-                case "conversionrenew":
+                case "REASSIGN":
                     return CrmStatus.ConversionRenew;
 
                 default:
+                    Console.WriteLine($"Unknown crm status {status}");
                     return CrmStatus.Unknown;
             }
         }
@@ -295,8 +298,8 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
         {
             return new ReportRequest()
             {
-                //RegistrationDateFrom = CalendarUtils.StartOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
-                //RegistrationDateTo = CalendarUtils.EndOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
+                RegistrationDateFrom = CalendarUtils.StartOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
+                RegistrationDateTo = CalendarUtils.EndOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
                 FirstDepositDateFrom = CalendarUtils.StartOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
                 FirstDepositDateTo = CalendarUtils.EndOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
                 FirstDeposit = true,
@@ -314,13 +317,14 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
 
         public static IntegrationBridge.DepositorsReportingResponse SuccessMapToGrpc(ReportDepositResponse brandDeposits)
         {
-            var registrations = brandDeposits.Items.Select(report => new MarketingBox.Integration.Service.Grpc.Models.Registrations.DepositorReporting
+            var registrations = brandDeposits
+                .Items
+                .Where(s => s.FirstDeposit == true)
+                .Select(report => new MarketingBox.Integration.Service.Grpc.Models.Registrations.DepositorReporting
             {
                 CustomerEmail = report.Email,
-                CustomerId = report.UserId,
-                DepositedAt = report.CreatedAt,
-
-
+                CustomerId = report.ClientUUID,
+                DepositedAt = report.FirstDepositDate,
             }).ToList();
 
             return new IntegrationBridge.DepositorsReportingResponse()

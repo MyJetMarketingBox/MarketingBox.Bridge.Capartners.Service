@@ -29,13 +29,15 @@ namespace MarketingBox.Bridge.Capartners.Service.Services.Integrations
             RegisterTraderAsync(RegistrationRequest request)
         {
             var requestString = JsonConvert.SerializeObject(request);
-            var result = await _baseUrl
+            var requestUrl = _baseUrl
                 .AppendPathSegments("clients")
                 .WithHeader("Content-Type", "application/json")
                 .WithHeader("login", _login)
                 .WithHeader("password", _password)
                 .AllowHttpStatus("400")
-                .AllowHttpStatus("403")
+                .AllowHttpStatus("403");
+
+            var result = await requestUrl
                 .PostJsonAsync(request);
             return await result.ResponseMessage.DeserializeTo<RegistrationResponse, FailRegisterResponse>();
         }
@@ -45,7 +47,7 @@ namespace MarketingBox.Bridge.Capartners.Service.Services.Integrations
         {
             var requestString = JsonConvert.SerializeObject(request);
             var httpResponse = await _baseUrl
-                .AppendPathSegments("integration", "v1", "reports", "Deposits")
+                .AppendPathSegments("clients")
                 .WithHeader("Content-Type", "application/json")
                 .WithHeader("login", _login)
                 .WithHeader("password", _password)
@@ -89,7 +91,7 @@ namespace MarketingBox.Bridge.Capartners.Service.Services.Integrations
         {
             var requestString = JsonConvert.SerializeObject(request);
             var httpResponse = await _baseUrl
-                .AppendPathSegments("integration", "v1", "reports", "Registrations")
+                .AppendPathSegments("clients")
                 .WithHeader("Content-Type", "application/json")
                 .WithHeader("login", _login)
                 .WithHeader("password", _password)
