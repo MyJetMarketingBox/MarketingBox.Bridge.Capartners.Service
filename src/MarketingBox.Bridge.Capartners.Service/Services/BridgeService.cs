@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using MarketingBox.Bridge.Capartners.Service.Domain.Utils;
@@ -11,6 +12,7 @@ using MarketingBox.Bridge.SimpleTrading.Service.Domain.Extensions;
 using MarketingBox.Integration.Bridge.Client;
 using MarketingBox.Integration.Service.Domain.Registrations;
 using MarketingBox.Integration.Service.Grpc.Models.Common;
+using Microsoft.EntityFrameworkCore.Design.Internal;
 using Microsoft.Extensions.Logging;
 using IntegrationBridge = MarketingBox.Integration.Service.Grpc.Models.Registrations.Contracts.Bridge;
 
@@ -279,7 +281,7 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
                 }
 
                 // Success
-                return SuccessMapToGrpc(depositsResult.SuccessResult);
+                return SuccessMapToGrpc(depositsResult.SuccessResult, request.DateFrom, request.DateTo);
             }
             catch (Exception e)
             {
@@ -315,11 +317,12 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
             };
         }
 
-        public static IntegrationBridge.DepositorsReportingResponse SuccessMapToGrpc(ReportDepositResponse brandDeposits)
+        public static IntegrationBridge.DepositorsReportingResponse SuccessMapToGrpc(ReportDepositResponse brandDeposits, DateTime from, DateTime to)
         {
             var registrations = brandDeposits
                 .Items
-                .Where(s => s.FirstDeposit == true)
+                .Where(s => s.FirstDeposit == true && 
+                            (Convert.ToDateTime(s.FirstDepositDate) >= from && Convert.ToDateTime(s.FirstDepositDate) <= to))
                 .Select(report => new MarketingBox.Integration.Service.Grpc.Models.Registrations.DepositorReporting
             {
                 CustomerEmail = report.Email,
