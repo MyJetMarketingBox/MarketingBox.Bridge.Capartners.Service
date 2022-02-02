@@ -192,7 +192,7 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
                     Crm = MapCrmStatus(report.SalesStatus),
                     CustomerEmail = report.Email,
                     CustomerId = report.ClientUUID,
-                    CreatedAt = report.RegistrationDate,
+                    CreatedAt = Convert.ToDateTime(report.RegistrationDate),
                     CrmUpdatedAt = DateTime.UtcNow
                 }).ToList();
 
@@ -324,7 +324,7 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
             {
                 CustomerEmail = report.Email,
                 CustomerId = report.ClientUUID,
-                DepositedAt = report.FirstDepositDate,
+                DepositedAt = Convert.ToDateTime(report.FirstDepositDate),
             }).ToList();
 
             return new IntegrationBridge.DepositorsReportingResponse()

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Flurl;
 using Flurl.Http;
@@ -24,7 +25,7 @@ namespace MarketingBox.Bridge.Capartners.Service.Services.Integrations
             _password = password;
         }
 
-        // Url: //clients
+        // POST Url: /clients
         public async Task<Response<RegistrationResponse, FailRegisterResponse>>
             RegisterTraderAsync(RegistrationRequest request)
         {
@@ -42,7 +43,7 @@ namespace MarketingBox.Bridge.Capartners.Service.Services.Integrations
             return await result.ResponseMessage.DeserializeTo<RegistrationResponse, FailRegisterResponse>();
         }
 
-        // Url: /integration/v1/reports/Deposits
+        // GET Url: /clients
         public async Task<Response<ReportDepositResponse, FailRegisterResponse>> GetDepositsAsync(ReportRequest request)
         {
             var requestString = JsonConvert.SerializeObject(request);
@@ -53,7 +54,7 @@ namespace MarketingBox.Bridge.Capartners.Service.Services.Integrations
                 .WithHeader("password", _password)
                 .AllowHttpStatus("400")
                 .AllowHttpStatus("403")
-                .PostJsonAsync(request);
+                .SendJsonAsync(HttpMethod.Get, request);
             //return await result.ResponseMessage.DeserializeTo<ReportDepositResponse, FailRegisterResponse>();
             string resultData = string.Empty;
             try
@@ -61,7 +62,8 @@ namespace MarketingBox.Bridge.Capartners.Service.Services.Integrations
                 resultData = await httpResponse.ResponseMessage.Content.ReadAsStringAsync();
                 if (httpResponse.ResponseMessage.IsSuccessStatusCode)
                 {
-                    var items = JsonConvert.DeserializeObject<IReadOnlyCollection<ReportDepositModel>>(resultData);
+                    var full = JsonConvert.DeserializeObject<ReportDepositResponse>(resultData);
+                    var items = full?.Items;
                     return Response<ReportDepositResponse, FailRegisterResponse>.CreateSuccess(
                         new ReportDepositResponse()
                         {
@@ -86,7 +88,7 @@ namespace MarketingBox.Bridge.Capartners.Service.Services.Integrations
             }
         }
 
-        // Url: /integration/v1/reports/Registrations
+        // GET Url: /clients
         public async Task<Response<ReportRegistrationResponse, FailRegisterResponse>> GetRegistrationsAsync(ReportRequest request)
         {
             var requestString = JsonConvert.SerializeObject(request);
@@ -97,7 +99,7 @@ namespace MarketingBox.Bridge.Capartners.Service.Services.Integrations
                 .WithHeader("password", _password)
                 .AllowHttpStatus("400")
                 .AllowHttpStatus("403")
-                .PostJsonAsync(request);
+                .SendJsonAsync(HttpMethod.Get, request);
 
             //return await result.ResponseMessage.DeserializeListTo<IReadOnlyList<ReportRegistrationModel>, FailRegisterResponse>();
             string resultData = string.Empty;
@@ -106,7 +108,8 @@ namespace MarketingBox.Bridge.Capartners.Service.Services.Integrations
                 resultData = await httpResponse.ResponseMessage.Content.ReadAsStringAsync();
                 if (httpResponse.ResponseMessage.IsSuccessStatusCode)
                 {
-                    var items = JsonConvert.DeserializeObject<IReadOnlyCollection<ReportRegistrationModel>>(resultData);
+                    var full = JsonConvert.DeserializeObject<ReportRegistrationResponse>(resultData);
+                    var items = full?.Items;
                     return Response<ReportRegistrationResponse, FailRegisterResponse>.CreateSuccess(
                         new ReportRegistrationResponse()
                         {
