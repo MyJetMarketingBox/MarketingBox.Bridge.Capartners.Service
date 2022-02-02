@@ -52,9 +52,16 @@ namespace MarketingBox.Bridge.Capartners.Service.Services.Integrations
                 .WithHeader("Content-Type", "application/json")
                 .WithHeader("login", _login)
                 .WithHeader("password", _password)
+                .SetQueryParams(new
+                {
+                    firstDepositDateFrom = request.FirstDepositDateFrom,
+                    firstDepositDateTo = request.FirstDepositDateTo,
+                    firstDeposit = "true",
+                    page = request.Page
+                })
                 .AllowHttpStatus("400")
                 .AllowHttpStatus("403")
-                .SendJsonAsync(HttpMethod.Get, request);
+                .SendAsync(HttpMethod.Get);
             //return await result.ResponseMessage.DeserializeTo<ReportDepositResponse, FailRegisterResponse>();
             string resultData = string.Empty;
             try
@@ -92,16 +99,25 @@ namespace MarketingBox.Bridge.Capartners.Service.Services.Integrations
         public async Task<Response<ReportRegistrationResponse, FailRegisterResponse>> GetRegistrationsAsync(ReportRequest request)
         {
             var requestString = JsonConvert.SerializeObject(request);
-            var httpResponse = await _baseUrl
+            var uri = _baseUrl
                 .AppendPathSegments("clients")
                 .WithHeader("Content-Type", "application/json")
                 .WithHeader("login", _login)
                 .WithHeader("password", _password)
+                .SetQueryParams(new
+                {
+                    registrationDateFrom = request.RegistrationDateFrom,
+                    registrationDateTo = request.RegistrationDateTo,
+                    firstDeposit = "false",
+                    page = request.Page
+                })
                 .AllowHttpStatus("400")
-                .AllowHttpStatus("403")
-                .SendJsonAsync(HttpMethod.Get, request);
+                .AllowHttpStatus("403");
 
-            //return await result.ResponseMessage.DeserializeListTo<IReadOnlyList<ReportRegistrationModel>, FailRegisterResponse>();
+            var httpResponse = await uri
+                .SendAsync(HttpMethod.Get);
+
+
             string resultData = string.Empty;
             try
             {
