@@ -206,6 +206,8 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
             };
         }
 
+
+        
         public static CrmStatus MapCrmStatus(string status)
         {
             switch (status.ToUpper())
@@ -215,35 +217,65 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
                     return CrmStatus.New;
 
                 case "DEPOSITOR":
+                case "CONVERTED":
+                case "SELF_DEPOSITOR":
                     return CrmStatus.FullyActivated;
 
-                //case "":
-                //    return CrmStatus.HighPriority;
+                case "POTENTIAL_HIGH":
+                case "HOT":
+                    return CrmStatus.HighPriority;
 
-                //case "":
-                //    return CrmStatus.Callback;
-
-                //case "":
-                //    return CrmStatus.FailedExpectation;
+                case "INITIAL_CALL":
+                case "CALLBACK":
+                case "LONG_TERM_CALL_BACK":
+                case "CALL_BACK_INSFF":
+                    return CrmStatus.Callback;
+                
+                case "NO_MONEY":
+                case "POTENTIAL_LOW":
+                case "FAILED_DEPOSIT":
+                case "JUNK_LEAD":
+                case "EXPECTATION":
+                case "POTENTIAL_FRAUD":
+                case "PENDING":
+                    return CrmStatus.FailedExpectation;
 
                 case "WRONG_INFO":
                 case "WRONG_NUMBER":
                 case "INVALID_LANGUAGE":
                 case "INVALID_COUNTRY":
+                case "DUPLICATE":
+                case "UNDER_18":
+                case "BLACK_LIST_COUNTRY":
                     return CrmStatus.NotValid;
 
                 case "NO_INTEREST":
                 case "HUNG_UP":
+                case "DO_NOT_CALL":
                     return CrmStatus.NotInterested;
 
-                //case "":
-                //    return CrmStatus.Transfer;
+                case "WIRE_SENT":
+                    return CrmStatus.Transfer;
 
-                //case "":
-                //    return CrmStatus.FollowUp;
+                case "DIALER_ASSIGNED":
+                case "DIALER_DROP":
+                case "DIALER_NA":
+                case "DIALER_NEW":
+                case "PUBLIC_NUMBER":
+                case "SHARED_3":
+                case "SHARED_2":
+                case "SHARED":
+                case "MEDIA":
+                    return CrmStatus.FollowUp;
 
                 case "NEVER_ANSWER":
                 case "VOICEMAIL":
+                case "NO_ANSWER":
+                case "NO_ANSWER_2":
+                case "NO_ANSWER_3":
+                case "NO_ANSWER_4":
+                case "NO_ANSWER_5":
+
                     return CrmStatus.NA;
 
                 case "REASSIGN":
