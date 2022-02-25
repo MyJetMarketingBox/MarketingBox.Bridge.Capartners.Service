@@ -6,7 +6,7 @@ using MarketingBox.Bridge.Capartners.Service.Services;
 using MarketingBox.Bridge.Capartners.Service.Services.Integrations;
 using MarketingBox.Bridge.Capartners.Service.Services.Integrations.Contracts.Requests;
 using MarketingBox.Bridge.Capartners.Service.Settings;
-using MarketingBox.Integration.Service.Grpc.Models.Common;
+using MarketingBox.Sdk.Common.Models.Grpc;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
@@ -102,9 +102,8 @@ namespace MarketingBox.Bridge.Capartners.Service.Tests
             };
 
             var result = await _registerService.RegisterExternalCustomerAsync(request);
-            Assert.AreEqual(ResultCode.CompletedSuccessfully, result.ResultCode);
+            Assert.AreEqual(ResponseStatus.Ok, result.Status);
         }
-
 
         [Test]
         public async Task ServiceAlreadyExistHttpSend()
@@ -145,11 +144,10 @@ namespace MarketingBox.Bridge.Capartners.Service.Tests
                 Referral = @"https://redirectedFromUrl.online/nb_1st_pfizer_hp_st_pl/?sub_id=101211&offer_id"
             };
             var result = await _registerService.RegisterExternalCustomerAsync(request1);
-            Assert.AreEqual(ResultCode.CompletedSuccessfully, result.ResultCode);
+            Assert.AreEqual(ResponseStatus.Ok, result.Status);
             // The same registration with another time window
-            result = await _registerService.RegisterExternalCustomerAsync(request2);
-            Assert.AreEqual(ResultCode.Failed, result.ResultCode);
-            Assert.AreEqual(ErrorType.AlreadyExist, result.Error.Type);
+            Assert.ThrowsAsync<Exception>(async () =>
+                result = await _registerService.RegisterExternalCustomerAsync(request2));
         }
 
         [Test]
@@ -190,10 +188,10 @@ namespace MarketingBox.Bridge.Capartners.Service.Tests
                 Referral = @"https://redirectedFromUrl.online/nb_1st_pfizer_hp_st_pl/?sub_id=101211&offer_id"
             };
             var result = await _registerService.RegisterExternalCustomerAsync(request1);
-            Assert.AreEqual(ResultCode.CompletedSuccessfully, result.ResultCode);
+            Assert.AreEqual(ResponseStatus.Ok, result.Status);
             // The same registration with another time window
             result = await _registerService.RegisterExternalCustomerAsync(request2);
-            Assert.AreEqual(ResultCode.CompletedSuccessfully, result.ResultCode);
+            Assert.AreEqual(ResponseStatus.Ok, result.Status);
         }
     }
 }
