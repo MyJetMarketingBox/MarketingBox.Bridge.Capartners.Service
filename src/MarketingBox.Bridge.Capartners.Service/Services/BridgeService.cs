@@ -4,11 +4,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using MarketingBox.Bridge.Capartners.Service.Domain.Utils;
 using MarketingBox.Bridge.Capartners.Service.Services.Integrations;
-using MarketingBox.Bridge.Capartners.Service.Services.Integrations.Contracts.Enums;
 using MarketingBox.Bridge.Capartners.Service.Services.Integrations.Contracts.Requests;
 using MarketingBox.Bridge.Capartners.Service.Services.Integrations.Contracts.Responses;
 using MarketingBox.Bridge.Capartners.Service.Settings;
-using MarketingBox.Bridge.SimpleTrading.Service.Domain.Extensions;
 using MarketingBox.Integration.Bridge.Client;
 using MarketingBox.Integration.Service.Domain.Registrations;
 using MarketingBox.Integration.Service.Grpc.Models.Registrations;
@@ -71,29 +69,36 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
                 }
             };
         }
-        
-        private ReportRequest MapRegistrationToApi(
-            IntegrationBridge.ReportingRequest request)
+
+        private static ReportRequest MapRegistrationToApi(IntegrationBridge.ReportingRequest request)
         {
             return new ReportRequest()
             {
-                RegistrationDateFrom = CalendarUtils.StartOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
-                RegistrationDateTo = CalendarUtils.EndOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
-                //FirstDepositDateFrom = CalendarUtils.StartOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
-                //FirstDepositDateTo = CalendarUtils.EndOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
+                RegistrationDateFrom = CalendarUtils
+                    .StartOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month))
+                    .ToString("yyyy-MM-dd"),
+                RegistrationDateTo = CalendarUtils
+                    .EndOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month))
+                    .ToString("yyyy-MM-dd"),
+                FirstDepositDateFrom = CalendarUtils
+                    .StartOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month))
+                    .ToString("yyyy-MM-dd"),
+                FirstDepositDateTo = CalendarUtils
+                    .EndOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month))
+                    .ToString("yyyy-MM-dd"),
                 FirstDeposit = false,
                 Page = request.PageIndex,
             };
         }
 
-        private static Response<IReadOnlyCollection<RegistrationReporting>> SuccessMapToGrpc(ReportRegistrationResponse brandRegistrations)
+        private static Response<IReadOnlyCollection<RegistrationReporting>> SuccessMapToGrpc(
+            ReportRegistrationResponse brandRegistrations)
         {
             var registrations = brandRegistrations
                 .Items
                 .Where(s => s.FirstDeposit == false)
                 .Select(report => new MarketingBox.Integration.Service.Grpc.Models.Registrations.RegistrationReporting
                 {
-
                     Crm = MapCrmStatus(report.SalesStatus),
                     CustomerEmail = report.Email,
                     CustomerId = report.ClientUUID,
@@ -130,7 +135,7 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
                 case "LONG_TERM_CALL_BACK":
                 case "CALL_BACK_INSFF":
                     return CrmStatus.Callback;
-                
+
                 case "NO_MONEY":
                 case "POTENTIAL_LOW":
                 case "FAILED_DEPOSIT":
@@ -186,27 +191,37 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
                     return CrmStatus.Unknown;
             }
         }
-        
+
         private static ReportRequest MapDepositsToApi(IntegrationBridge.ReportingRequest request)
         {
             return new ReportRequest()
             {
-                RegistrationDateFrom = CalendarUtils.StartOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
-                RegistrationDateTo = CalendarUtils.EndOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
-                FirstDepositDateFrom = CalendarUtils.StartOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
-                FirstDepositDateTo = CalendarUtils.EndOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
+                RegistrationDateFrom = CalendarUtils
+                    .StartOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month))
+                    .ToString("yyyy-MM-dd"),
+                RegistrationDateTo = CalendarUtils
+                    .EndOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month))
+                    .ToString("yyyy-MM-dd"),
+                FirstDepositDateFrom = CalendarUtils
+                    .StartOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month))
+                    .ToString("yyyy-MM-dd"),
+                FirstDepositDateTo = CalendarUtils
+                    .EndOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month))
+                    .ToString("yyyy-MM-dd"),
                 FirstDeposit = true,
                 Page = request.PageIndex,
             };
         }
 
-        private static Response<IReadOnlyCollection<DepositorReporting>> SuccessMapToGrpc(ReportDepositResponse brandDeposits)
+        private static Response<IReadOnlyCollection<DepositorReporting>> SuccessMapToGrpc(
+            ReportDepositResponse brandDeposits, DateTime from, DateTime to)
         {
             var registrations = brandDeposits
                 .Items
-                .Where(s => s.FirstDeposit == true && 
-                            (Convert.ToDateTime(s.FirstDepositDate) >= from && Convert.ToDateTime(s.FirstDepositDate) <= to))
-                .Select(report => new MarketingBox.Integration.Service.Grpc.Models.Registrations.DepositorReporting
+                .Where(s => s.FirstDeposit &&
+                            (Convert.ToDateTime(s.FirstDepositDate) >= from &&
+                             Convert.ToDateTime(s.FirstDepositDate) <= to))
+                .Select(report => new DepositorReporting
                 {
                     CustomerEmail = report.Email,
                     CustomerId = report.ClientUUID,
@@ -226,20 +241,20 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
             _capartnersHttpClient = capartnersHttpClient;
             _settingsModel = settingsModel;
         }
+
         /// <summary>
         /// Register new lead
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<Response<CustomerInfo>> SendRegistrationAsync(
-            IntegrationBridge.RegistrationRequest request)
+        public async Task<Response<CustomerInfo>> SendRegistrationAsync(IntegrationBridge.RegistrationRequest request)
         {
-            _logger.LogInformation("Creating new LeadInfo {@context}", request);
-
-            var brandRequest = MapToApi(request);
-
             try
             {
+                _logger.LogInformation("Creating new LeadInfo {@context}", request);
+
+                var brandRequest = MapToApi(request);
+
                 return await RegisterExternalCustomerAsync(brandRequest);
             }
             catch (Exception e)
@@ -255,14 +270,15 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<Response<IReadOnlyCollection<RegistrationReporting>>> GetRegistrationsPerPeriodAsync(IntegrationBridge.ReportingRequest request)
+        public async Task<Response<IReadOnlyCollection<RegistrationReporting>>> GetRegistrationsPerPeriodAsync(
+            IntegrationBridge.ReportingRequest request)
         {
-            _logger.LogInformation("GetRegistrationsPerPeriodAsync {@context}", request);
-
-            var brandRequest = MapRegistrationToApi(request);
-
             try
             {
+                _logger.LogInformation("GetRegistrationsPerPeriodAsync {@context}", request);
+
+                var brandRequest = MapRegistrationToApi(request);
+
                 // Get registrations
                 var registerResult = await _capartnersHttpClient.GetRegistrationsAsync(brandRequest);
                 // Failed
@@ -286,14 +302,15 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<Response<IReadOnlyCollection<DepositorReporting>>> GetDepositorsPerPeriodAsync(IntegrationBridge.ReportingRequest request)
+        public async Task<Response<IReadOnlyCollection<DepositorReporting>>> GetDepositorsPerPeriodAsync(
+            IntegrationBridge.ReportingRequest request)
         {
-            _logger.LogInformation("GetRegistrationsPerPeriodAsync {@context}", request);
-
-            var brandRequest = MapDepositsToApi(request);
-
             try
             {
+                _logger.LogInformation("GetRegistrationsPerPeriodAsync {@context}", request);
+
+                var brandRequest = MapDepositsToApi(request);
+
                 // Get deposits
                 var depositsResult = await _capartnersHttpClient.GetDepositsAsync(brandRequest);
                 // Failed
@@ -310,47 +327,6 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
                 _logger.LogError(e, "Error get registration reporting {@context}", request);
                 return e.FailedResponse<IReadOnlyCollection<DepositorReporting>>();
             }
-        }
-
-        private ReportRequest MapDepositsToApi(
-            IntegrationBridge.ReportingRequest request)
-        {
-            return new ReportRequest()
-            {
-                //RegistrationDateFrom = CalendarUtils.StartOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
-                //RegistrationDateTo = CalendarUtils.EndOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
-                FirstDepositDateFrom = CalendarUtils.StartOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
-                FirstDepositDateTo = CalendarUtils.EndOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
-                FirstDeposit = true,
-                Page = request.PageIndex,
-            };
-        }
-
-        public static IntegrationBridge.DepositorsReportingResponse FailedDepositorsMapToGrpc(Error error, ResultCode code)
-        {
-            return new IntegrationBridge.DepositorsReportingResponse()
-            {
-                Error = error
-            };
-        }
-
-        public static IntegrationBridge.DepositorsReportingResponse SuccessMapToGrpc(ReportDepositResponse brandDeposits)
-        {
-            var registrations = brandDeposits.Items.Select(report => new MarketingBox.Integration.Service.Grpc.Models.Registrations.DepositorReporting
-            {
-                CustomerEmail = report.Email,
-                CustomerId = report.UserId,
-                DepositedAt = report.CreatedAt,
-
-
-            }).ToList();
-
-            return new IntegrationBridge.DepositorsReportingResponse()
-            {
-                //ResultCode = ResultCode.CompletedSuccessfully,
-                //ResultMessage = EnumExtensions.GetDescription((ResultCode)ResultCode.CompletedSuccessfully),
-                Items = registrations
-            };
         }
     }
 }
