@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="7.2.0" />
-    <PackageReference Include="Grpc.AspNetCore" Version="2.41.0" />
+    <PackageReference Include="Grpc.AspNetCore" Version="2.42.0" />
     <PackageReference Include="JetBrains.Annotations" Version="2021.3.0" />
     <PackageReference Include="MarketingBox.Integration.Bridge.Client" Version="2.2.6" />
 	  <PackageReference Include="Microsoft.Extensions.Configuration" Version="6.0.0" />
@@ -21,7 +21,7 @@
     <PackageReference Include="SimpleTrading.BaseMetrics" Version="1.0.3" />
     <PackageReference Include="SimpleTrading.ServiceStatusReporterConnector" Version="1.0.9" />
     <PackageReference Include="MySettingsReader" Version="1.2.1" />
-    <PackageReference Include="Z.EntityFramework.Plus.EFCore" Version="6.13.5" />
+    <PackageReference Include="Z.EntityFramework.Plus.EFCore" Version="6.13.8" />
   </ItemGroup>
 
   <ItemGroup>

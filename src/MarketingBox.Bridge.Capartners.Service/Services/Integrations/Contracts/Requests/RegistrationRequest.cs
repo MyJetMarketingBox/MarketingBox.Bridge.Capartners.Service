@@ -18,8 +18,8 @@ namespace MarketingBox.Bridge.Capartners.Service.Services.Integrations.Contracts
         [JsonProperty("country")]
         public string? Country { get; set; } // ISO 639-1:2002 (DE, CN, etc.)
 
-        [JsonProperty("gender")]
-        public string? Gender { get; set; }  // MALE or FEMALE
+        //[JsonProperty("gender")]
+        //public string? Gender { get; set; }  // MALE or FEMALE
 
         [LogMasked(ShowFirst = 2, ShowLast = 3)]
         [JsonProperty("email")]
@@ -46,17 +46,16 @@ namespace MarketingBox.Bridge.Capartners.Service.Services.Integrations.Contracts
         [JsonProperty("ip")]
         public string? Ip { get; set; }
 
-        [LogMasked]
-        [JsonProperty("city")]
-        public string? City { get; set; }
+        //[JsonProperty("city")]
+        //public string? City { get; set; }
 
-        [JsonProperty("address")]
-        public string? Address { get; set; }
+        //[JsonProperty("address")]
+        //public string? Address { get; set; }
 
-        [JsonProperty("postCode")]
-        public string? PostCode { get; set; }
+        //[JsonProperty("postCode")]
+        //public string? PostCode { get; set; }
 
-        [JsonProperty("birthday")]
-        public string? Birthday { get; set; }
+        //[JsonProperty("birthday")]
+        //public string? Birthday { get; set; }
     }
 }

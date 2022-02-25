@@ -4,9 +4,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using MarketingBox.Bridge.Capartners.Service.Domain.Utils;
 using MarketingBox.Bridge.Capartners.Service.Services.Integrations;
+using MarketingBox.Bridge.Capartners.Service.Services.Integrations.Contracts.Enums;
 using MarketingBox.Bridge.Capartners.Service.Services.Integrations.Contracts.Requests;
 using MarketingBox.Bridge.Capartners.Service.Services.Integrations.Contracts.Responses;
 using MarketingBox.Bridge.Capartners.Service.Settings;
+using MarketingBox.Bridge.SimpleTrading.Service.Domain.Extensions;
 using MarketingBox.Integration.Bridge.Client;
 using MarketingBox.Integration.Service.Domain.Registrations;
 using MarketingBox.Integration.Service.Grpc.Models.Registrations;
@@ -52,6 +54,7 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
                 Ip = request.Info.Ip,
                 Country = request.Info.Country,
                 Referral = request.AdditionalInfo.So,
+                Source = request.AdditionalInfo.Sub
             };
         }
 
@@ -85,14 +88,18 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
 
         private static Response<IReadOnlyCollection<RegistrationReporting>> SuccessMapToGrpc(ReportRegistrationResponse brandRegistrations)
         {
-            var registrations = brandRegistrations.Items.Select(report => new RegistrationReporting
-            {
-                Crm = MapCrmStatus(report.CrmStatus),
-                CustomerEmail = report.Email,
-                CustomerId = report.UserId,
-                CreatedAt = report.CreatedAt,
-                CrmUpdatedAt = DateTime.UtcNow
-            }).ToList();
+            var registrations = brandRegistrations
+                .Items
+                .Where(s => s.FirstDeposit == false)
+                .Select(report => new MarketingBox.Integration.Service.Grpc.Models.Registrations.RegistrationReporting
+                {
+
+                    Crm = MapCrmStatus(report.SalesStatus),
+                    CustomerEmail = report.Email,
+                    CustomerId = report.ClientUUID,
+                    CreatedAt = Convert.ToDateTime(report.RegistrationDate),
+                    CrmUpdatedAt = DateTime.UtcNow
+                }).ToList();
 
             return new Response<IReadOnlyCollection<RegistrationReporting>>()
             {
@@ -103,51 +110,79 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
 
         private static CrmStatus MapCrmStatus(string status)
         {
-            switch (status.ToLower())
+            switch (status.ToUpper())
             {
-                case "new":
+                case "NEW":
+                case "TEST":
                     return CrmStatus.New;
 
-                case "fullyactivated":
+                case "DEPOSITOR":
+                case "CONVERTED":
+                case "SELF_DEPOSITOR":
                     return CrmStatus.FullyActivated;
 
-                case "highpriority":
+                case "POTENTIAL_HIGH":
+                case "HOT":
                     return CrmStatus.HighPriority;
 
-                case "callback":
+                case "INITIAL_CALL":
+                case "CALLBACK":
+                case "LONG_TERM_CALL_BACK":
+                case "CALL_BACK_INSFF":
                     return CrmStatus.Callback;
-
-                case "failedexpectation":
+                
+                case "NO_MONEY":
+                case "POTENTIAL_LOW":
+                case "FAILED_DEPOSIT":
+                case "JUNK_LEAD":
+                case "EXPECTATION":
+                case "POTENTIAL_FRAUD":
+                case "PENDING":
                     return CrmStatus.FailedExpectation;
 
-                case "notvaliddeletedaccount":
-                case "notvalidwrongnumber":
-                case "notvalidnophonenumber":
-                case "notvalidduplicateuser":
-                case "notvalidtestlead":
-                case "notvalidunderage":
-                case "notvalidnolanguagesupport":
-                case "notvalidneverregistered":
-                case "notvalidnoneligiblecountries":
+                case "WRONG_INFO":
+                case "WRONG_NUMBER":
+                case "INVALID_LANGUAGE":
+                case "INVALID_COUNTRY":
+                case "DUPLICATE":
+                case "UNDER_18":
+                case "BLACK_LIST_COUNTRY":
                     return CrmStatus.NotValid;
 
-                case "notinterested":
+                case "NO_INTEREST":
+                case "HUNG_UP":
+                case "DO_NOT_CALL":
                     return CrmStatus.NotInterested;
 
-                case "transfer":
+                case "WIRE_SENT":
                     return CrmStatus.Transfer;
 
-                case "followup":
+                case "DIALER_ASSIGNED":
+                case "DIALER_DROP":
+                case "DIALER_NA":
+                case "DIALER_NEW":
+                case "PUBLIC_NUMBER":
+                case "SHARED_3":
+                case "SHARED_2":
+                case "SHARED":
+                case "MEDIA":
                     return CrmStatus.FollowUp;
 
-                case "noanswer":
-                case "autocall":
+                case "NEVER_ANSWER":
+                case "VOICEMAIL":
+                case "NO_ANSWER":
+                case "NO_ANSWER_2":
+                case "NO_ANSWER_3":
+                case "NO_ANSWER_4":
+                case "NO_ANSWER_5":
+
                     return CrmStatus.NA;
 
-                case "conversionrenew":
+                case "REASSIGN":
                     return CrmStatus.ConversionRenew;
 
                 default:
+                    Console.WriteLine($"Unknown crm status {status}");
                     return CrmStatus.Unknown;
             }
         }
@@ -156,8 +191,8 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
         {
             return new ReportRequest()
             {
-                //RegistrationDateFrom = CalendarUtils.StartOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
-                //RegistrationDateTo = CalendarUtils.EndOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
+                RegistrationDateFrom = CalendarUtils.StartOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
+                RegistrationDateTo = CalendarUtils.EndOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
                 FirstDepositDateFrom = CalendarUtils.StartOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
                 FirstDepositDateTo = CalendarUtils.EndOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
                 FirstDeposit = true,
@@ -167,13 +202,16 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
 
         private static Response<IReadOnlyCollection<DepositorReporting>> SuccessMapToGrpc(ReportDepositResponse brandDeposits)
         {
-            var registrations = brandDeposits.Items.Select(report => new DepositorReporting
-            {
-                CustomerEmail = report.Email,
-                CustomerId = report.UserId,
-                DepositedAt = report.CreatedAt,
-            }).ToList();
-
+            var registrations = brandDeposits
+                .Items
+                .Where(s => s.FirstDeposit == true && 
+                            (Convert.ToDateTime(s.FirstDepositDate) >= from && Convert.ToDateTime(s.FirstDepositDate) <= to))
+                .Select(report => new MarketingBox.Integration.Service.Grpc.Models.Registrations.DepositorReporting
+                {
+                    CustomerEmail = report.Email,
+                    CustomerId = report.ClientUUID,
+                    DepositedAt = Convert.ToDateTime(report.FirstDepositDate),
+                }).ToList();
             return new Response<IReadOnlyCollection<DepositorReporting>>
             {
                 Status = ResponseStatus.Ok,
@@ -265,13 +303,54 @@ namespace MarketingBox.Bridge.Capartners.Service.Services
                 }
 
                 // Success
-                return SuccessMapToGrpc(depositsResult.SuccessResult);
+                return SuccessMapToGrpc(depositsResult.SuccessResult, request.DateFrom, request.DateTo);
             }
             catch (Exception e)
             {
                 _logger.LogError(e, "Error get registration reporting {@context}", request);
                 return e.FailedResponse<IReadOnlyCollection<DepositorReporting>>();
             }
+        }
+
+        private ReportRequest MapDepositsToApi(
+            IntegrationBridge.ReportingRequest request)
+        {
+            return new ReportRequest()
+            {
+                //RegistrationDateFrom = CalendarUtils.StartOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
+                //RegistrationDateTo = CalendarUtils.EndOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
+                FirstDepositDateFrom = CalendarUtils.StartOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
+                FirstDepositDateTo = CalendarUtils.EndOfMonth(CalendarUtils.GetDateTime(request.DateFrom.Year, request.DateFrom.Month)).ToString("yyyy-MM-dd"),
+                FirstDeposit = true,
+                Page = request.PageIndex,
+            };
+        }
+
+        public static IntegrationBridge.DepositorsReportingResponse FailedDepositorsMapToGrpc(Error error, ResultCode code)
+        {
+            return new IntegrationBridge.DepositorsReportingResponse()
+            {
+                Error = error
+            };
+        }
+
+        public static IntegrationBridge.DepositorsReportingResponse SuccessMapToGrpc(ReportDepositResponse brandDeposits)
+        {
+            var registrations = brandDeposits.Items.Select(report => new MarketingBox.Integration.Service.Grpc.Models.Registrations.DepositorReporting
+            {
+                CustomerEmail = report.Email,
+                CustomerId = report.UserId,
+                DepositedAt = report.CreatedAt,
+
+
+            }).ToList();
+
+            return new IntegrationBridge.DepositorsReportingResponse()
+            {
+                //ResultCode = ResultCode.CompletedSuccessfully,
+                //ResultMessage = EnumExtensions.GetDescription((ResultCode)ResultCode.CompletedSuccessfully),
+                Items = registrations
+            };
         }
     }
 }
